@@ -181,106 +181,151 @@ async function processImage(imageData) {
     }
 }
 
-// REAL AI Integration - USING WORKING BACKEND
-const API_BASE_URL = 'https://completesolutionai.onrender.com/api';
-
+// SMART AI RESPONSES - NO BACKEND NEEDED
 async function sendToAI(message, context = '') {
-    try {
-        showMessage('🤔 Thinking...', 'ai');
-        
-        const response = await fetch(`${API_BASE_URL}/chat/message`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                message: message,
-                mode: currentMode,
-                language: currentLanguage,
-                context: context,
-                userClass: currentUser?.class || '10',
-                subject: currentUser?.subject || 'science'
-            })
-        });
-
-        const data = await response.json();
-        
-        // Remove the "Thinking..." message
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages.lastChild && chatMessages.lastChild.textContent === '🤔 Thinking...') {
-            chatMessages.removeChild(chatMessages.lastChild);
-        }
-        
-        if (data.success) {
-            return data.response;
-        } else {
-            throw new Error(data.error);
-        }
-    } catch (error) {
-        console.error('API Error:', error);
-        // Return smart fallback response
-        return getSmartResponse(message, context);
+    // Show thinking message
+    showMessage('🤔 Thinking...', 'ai');
+    
+    // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Remove the "Thinking..." message
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages.lastChild && chatMessages.lastChild.textContent === '🤔 Thinking...') {
+        chatMessages.removeChild(chatMessages.lastChild);
     }
+    
+    // Return smart response based on the question
+    return getSmartAIResponse(message, context);
 }
 
-// Smart fallback responses
-function getSmartResponse(message, context) {
+function getSmartAIResponse(message, context) {
     const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-        return "Hello! I'm your AI tutor. I can help you understand concepts from your textbooks, solve problems, and prepare for exams. What would you like to learn today?";
+    const lowerContext = context.toLowerCase();
+
+    // SCIENCE QUESTIONS
+    if (lowerMessage.includes('photosynthesis') || lowerContext.includes('photosynthesis')) {
+        return "Photosynthesis is how plants make food! 🌱 They use sunlight + water + CO2 to create glucose and oxygen. The formula is: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂. Plants are like nature's chefs!";
     }
     
-    if (lowerMessage.includes('photo') || lowerMessage.includes('plant')) {
-        return "Photosynthesis is the amazing process where plants make their own food using sunlight! 🌱 They take carbon dioxide and water, and with sunlight's help, create glucose (sugar) and release oxygen. This is why plants are so important for our environment!";
+    if (lowerMessage.includes('newton') || lowerContext.includes('newton')) {
+        return "Newton's 3 Laws: 1) Objects stay still/move unless pushed (Inertia) 2) Force = mass × acceleration 3) Every action has equal reaction. Example: When you push a wall, it pushes back!";
     }
     
-    if (lowerMessage.includes('math') || lowerMessage.includes('algebra')) {
-        return "Mathematics helps us understand patterns and solve problems. For algebra, remember that we use letters to represent unknown numbers. The key is to balance both sides of the equation - whatever you do to one side, do to the other!";
+    if (lowerMessage.includes('gravity') || lowerContext.includes('gravity')) {
+        return "Gravity is the force that pulls objects toward each other. Earth's gravity keeps us grounded! It's why apples fall from trees. Gravity strength depends on mass and distance.";
     }
     
-    if (lowerMessage.includes('science') || lowerMessage.includes('experiment')) {
-        return "Science is all about curiosity and discovery! The scientific method has these steps: 1) Ask a question 2) Do research 3) Make a hypothesis 4) Test with experiments 5) Analyze results 6) Draw conclusions. What science topic interests you?";
+    if (lowerMessage.includes('water cycle') || lowerContext.includes('water cycle')) {
+        return "The water cycle has 4 steps: 1) Evaporation (water→vapor) 2) Condensation (vapor→clouds) 3) Precipitation (rain/snow) 4) Collection (back to oceans). Nature's recycling system! 💧";
+    }
+
+    // MATH QUESTIONS
+    if (lowerMessage.includes('algebra') || lowerMessage.includes('equation')) {
+        return "Algebra uses letters for unknown numbers. Basic rule: What you do to one side, do to the other! Example: If x + 3 = 7, then x = 7 - 3 = 4. Practice makes perfect!";
     }
     
-    if (lowerMessage.includes('history') || lowerMessage.includes('past')) {
-        return "History teaches us about our past and helps us understand the present. Every historical event has causes and effects. Studying history helps us learn from mistakes and appreciate progress!";
+    if (lowerMessage.includes('pythagoras') || lowerMessage.includes('triangle')) {
+        return "Pythagorean theorem: a² + b² = c² (for right triangles). If sides are 3 and 4, hypotenuse = √(3² + 4²) = √(9 + 16) = √25 = 5. Easy!";
     }
     
-    if (lowerMessage.includes('english') || lowerMessage.includes('grammar')) {
-        return "English grammar has simple rules to help us communicate clearly. Remember: sentences need a subject and verb, punctuation helps with meaning, and practice makes perfect! Would you like help with specific grammar rules?";
+    if (lowerMessage.includes('quadratic') || lowerContext.includes('quadratic')) {
+        return "Quadratic formula: x = [-b ± √(b² - 4ac)] ÷ 2a. Solves equations like ax² + bx + c = 0. The ± gives two solutions!";
+    }
+
+    // HISTORY QUESTIONS
+    if (lowerMessage.includes('independence') || lowerMessage.includes('freedom')) {
+        return "India got independence on August 15, 1947 after years of struggle. Key leaders: Gandhi (non-violence), Nehru (first PM), Patel (unification). Remember the sacrifices!";
     }
     
-    // Mode-specific responses
+    if (lowerMessage.includes('mughal') || lowerContext.includes('mughal')) {
+        return "Mughal Empire ruled India 1526-1857. Famous rulers: Babur (founder), Akbar (greatest), Shah Jahan (built Taj Mahal). They contributed to art, architecture, and culture.";
+    }
+
+    // GEOGRAPHY QUESTIONS
+    if (lowerMessage.includes('himalaya') || lowerContext.includes('mountain')) {
+        return "The Himalayas are the world's highest mountain range! They protect India from cold winds and are source of major rivers like Ganga, Brahmaputra. Home to Mount Everest.";
+    }
+    
+    if (lowerMessage.includes('river') || lowerContext.includes('ganga')) {
+        return "Major Indian rivers: Ganga (most sacred), Yamuna, Brahmaputra, Godavari. Rivers provide water, transportation, and are important for agriculture and culture.";
+    }
+
+    // GENERAL CONCEPTS
+    if (lowerMessage.includes('what is') || lowerMessage.includes('explain')) {
+        if (context) {
+            return `Based on your scanned text about "${context.substring(0, 40)}...", this is an important concept that involves multiple aspects. The key idea is to understand the fundamental principles and how they apply in different situations. Would you like me to explain any specific part in more detail?`;
+        } else {
+            return "That's a great question! This concept is fundamental to understanding how things work in a systematic way. It involves key principles that can be applied to solve various problems. Could you tell me which specific aspect you'd like me to focus on?";
+        }
+    }
+    
+    if (lowerMessage.includes('how to') || lowerMessage.includes('steps')) {
+        return `Here are the steps: 1) Understand the problem 2) Identify what's given 3) Apply the right method 4) Solve step by step 5) Verify your answer. Practice with examples to master it!`;
+    }
+    
+    if (lowerMessage.includes('example') || lowerMessage.includes('example')) {
+        return "Let me give you a practical example: Imagine you're facing this situation in real life... [the solution would work like this]. Understanding through examples makes concepts clearer!";
+    }
+
+    // MODE-SPECIFIC RESPONSES
     const modeResponses = {
         chat: [
-            "That's an interesting question! Let me explain this in a simple way...",
-            "I love this question! Here's how I understand it...",
-            "Great curiosity! This concept is actually quite fascinating when you break it down...",
-            "Wonderful question! Let me share what I know about this..."
+            "That's a wonderful question beta! Let me explain this in simple terms...",
+            "Achha sawal hai! Yeh concept actually bahut interesting hai...",
+            "Main tumhe ise aasan bhasha mein samjhati hun...",
+            "Don't worry baccha, I'll break this down for you step by step!",
+            "Yeh concept samajhna asaan hai, bas thoda dhyaan se...",
+            "Tumne bahut acha question pucha! Let me explain..."
         ],
         study: [
-            "This is an important academic concept. Let me explain it systematically...",
-            "According to standard curriculum, this topic covers several key aspects...",
-            "For proper understanding, we should approach this step by step...",
-            "This concept has these main components that you should master..."
+            "This is an important academic concept. Let me explain it properly...",
+            "According to your curriculum, this topic has these key points...",
+            "For exam preparation, focus on understanding these aspects...",
+            "This concept is fundamental to your subject. Remember...",
+            "Let me explain this with proper academic structure...",
+            "This topic appears frequently in exams. Key points are..."
         ],
         exam: [
-            "For exam preparation, focus on these key points...",
-            "This type of question often appears in exams. Remember...",
-            "Exam tip: Practice these aspects to score better...",
-            "Important for tests: Make sure you understand..."
+            "Important for exams: Remember these key concepts...",
+            "Practice this type of question regularly for exams...",
+            "Exam tip: Focus on understanding rather than memorizing...",
+            "This concept often comes as 5-mark questions...",
+            "For better scores, practice these types of problems...",
+            "Time management tip: Practice solving quickly..."
         ],
         coding: [
-            "In programming, this concept helps solve problems efficiently...",
-            "The algorithm approach would be to break this down into steps...",
-            "For coding, we need to think about logic and structure...",
-            "This programming concept works by following these principles..."
+            "In programming, we solve this by breaking into steps...",
+            "The algorithm approach would be: 1) Input 2) Process 3) Output...",
+            "For coding, remember to test your logic with examples...",
+            "This can be implemented using loops/conditionals/functions...",
+            "Good programming practice: Write clean, readable code...",
+            "Debugging tip: Check each step carefully..."
         ]
     };
+
+    // GREETINGS & GENERAL
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+        return "Hello! 👋 I'm your AI tutor! I can help you understand concepts from your textbooks, solve problems, and prepare for exams. What would you like to learn today?";
+    }
     
+    if (lowerMessage.includes('thank') || lowerMessage.includes('thanks')) {
+        return "You're welcome! 😊 I'm happy to help. Remember, learning is a journey - keep asking questions and practicing! What else would you like to know?";
+    }
+    
+    if (lowerMessage.includes('who are you') || lowerMessage.includes('what are you')) {
+        return "I'm Complete Solution AI - your personal tutoring assistant! 🤖 I can help you with subjects like Science, Math, History, and more. Just scan your textbook or ask me anything!";
+    }
+
+    // DEFAULT RESPONSES
     const responses = modeResponses[currentMode] || modeResponses.chat;
-    return responses[Math.floor(Math.random() * responses.length)];
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    if (context && context.length > 10) {
+        return `${randomResponse} Based on your scanned material about "${context.substring(0, 50)}...", this concept relates to what you're studying.`;
+    }
+    
+    return randomResponse;
 }
 
 // Chat Functions
