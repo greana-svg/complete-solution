@@ -108,7 +108,7 @@ function updateUserInterface() {
     }
 }
 
-// Camera and OCR Functions
+// REAL OCR Functions
 async function initializeCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -116,6 +116,7 @@ async function initializeCamera() {
         video.srcObject = stream;
     } catch (err) {
         console.error('Error accessing camera:', err);
+        showMessage('❌ Camera access denied. Please allow camera permissions.', 'ai');
     }
 }
 
@@ -145,17 +146,24 @@ function handleFileUpload(event) {
     }
 }
 
+// REAL OCR PROCESSING
 async function processImage(imageData) {
-    showMessage('Processing image with OCR...', 'ai');
+    showMessage('🔍 Scanning image with OCR...', 'ai');
     
     try {
-        // Simulate OCR processing
-        const extractedText = await simulateOCR(imageData);
+        // Use Tesseract.js for real OCR
+        const { data: { text } } = await Tesseract.recognize(
+            imageData,
+            'eng+hin', // English + Hindi
+            { 
+                logger: m => console.log(m) 
+            }
+        );
         
         // Save scan
         const scan = {
             id: Date.now().toString(),
-            text: extractedText,
+            text: text,
             timestamp: new Date().toISOString(),
             image: imageData
         };
@@ -164,26 +172,83 @@ async function processImage(imageData) {
         localStorage.setItem('savedScans', JSON.stringify(savedScans));
         updateSavedScansList();
         
-        showMessage(`Text extracted successfully! I found content about "${extractedText.substring(0, 50)}..." How can I help you understand this?`, 'ai');
+        if (text.trim()) {
+            showMessage(`✅ Text extracted successfully! Found: "${text.substring(0, 100)}..." How can I help you understand this?`, 'ai');
+        } else {
+            showMessage('❌ No text detected. Please try with a clearer image or different page.', 'ai');
+        }
         
     } catch (error) {
+        console.error('OCR Error:', error);
         showMessage('Sorry, I had trouble reading the text. Please try with a clearer image.', 'ai');
     }
 }
 
-async function simulateOCR(imageData) {
-    // Simulate OCR processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+// REAL AI Integration
+const API_BASE_URL = 'http://localhost:5000/api'; // Change this when you deploy
+
+async function sendToAI(message, context = '') {
+    try {
+        // If backend is not set up, use simulated responses
+        if (!localStorage.getItem('backendSetup')) {
+            return getSimulatedAIResponse(message);
+        }
+
+        const response = await fetch(`${API_BASE_URL}/chat/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                mode: currentMode,
+                language: currentLanguage,
+                context: context,
+                userClass: currentUser?.class,
+                subject: currentUser?.subject
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.response;
+        } else {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        console.error('API Error:', error);
+        return getSimulatedAIResponse(message);
+    }
+}
+
+// Fallback simulated responses
+function getSimulatedAIResponse(userMessage) {
+    const responses = {
+        chat: [
+            "Beta, yeh concept bahut simple hai! Let me explain in simple Hinglish...",
+            "Achha sawal hai! Yeh concept aise kaam karta hai...",
+            "Don't worry baccha, I'll explain this step by step in easy language."
+        ],
+        study: [
+            `According to your ${currentUser?.board} Class ${currentUser?.class} syllabus, this topic covers important concepts that you should focus on.`,
+            "Let me explain this in detail as per your curriculum standards...",
+            "This is a key concept for your exams. Here's the detailed explanation..."
+        ],
+        exam: [
+            "Practice Question: Explain this concept in your own words within 5 minutes.",
+            "MCQ: Which of the following best describes this concept? A) Option 1 B) Option 2 C) Option 3",
+            "Exam Tip: Remember these key points for your test..."
+        ],
+        coding: [
+            "Here's how you can implement this in Python with proper syntax...",
+            "Let me explain the algorithm step by step with code examples...",
+            "For this programming problem, the optimal solution would be..."
+        ]
+    };
     
-    // Return mock extracted text
-    const mockTexts = [
-        "Photosynthesis is the process by which plants convert light energy into chemical energy, producing oxygen and organic compounds.",
-        "The quadratic formula is used to find the roots of a quadratic equation: x = [-b ± √(b² - 4ac)] / 2a",
-        "Newton's Second Law states that the acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass.",
-        "The water cycle describes the continuous movement of water on, above, and below the surface of the Earth through processes like evaporation, condensation, and precipitation."
-    ];
-    
-    return mockTexts[Math.floor(Math.random() * mockTexts.length)];
+    const modeResponses = responses[currentMode] || responses.chat;
+    return modeResponses[Math.floor(Math.random() * modeResponses.length)];
 }
 
 // Chat Functions
@@ -194,7 +259,7 @@ function initializeEventListeners() {
             document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
             this.classList.add('active');
             currentMode = this.dataset.mode;
-            showMessage(`Switched to ${this.querySelector('span:last-child').textContent}. How can I help you?`, 'ai');
+            showMessage(`🔄 Switched to ${this.querySelector('span:last-child').textContent}. How can I help you?`, 'ai');
         });
     });
     
@@ -207,10 +272,11 @@ function initializeEventListeners() {
     // Language selection
     document.getElementById('language-select').addEventListener('change', function() {
         currentLanguage = this.value;
+        showMessage(`🌐 Language changed to ${this.options[this.selectedIndex].text}`, 'ai');
     });
 }
 
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('message-input');
     const message = input.value.trim();
     
@@ -219,8 +285,12 @@ function sendMessage() {
     showMessage(message, 'user');
     input.value = '';
     
-    // Simulate AI response
-    setTimeout(() => generateAIResponse(message), 1000);
+    // Get context from latest scan
+    const context = savedScans.length > 0 ? savedScans[0].text : '';
+    
+    // Get AI response
+    const aiResponse = await sendToAI(message, context);
+    showMessage(aiResponse, 'ai');
 }
 
 function showMessage(text, sender) {
@@ -232,36 +302,6 @@ function showMessage(text, sender) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function generateAIResponse(userMessage) {
-    const responses = {
-        chat: [
-            "That's an interesting question! In simple Hinglish, let me explain...",
-            "Achha sawal hai! Yeh concept aise kaam karta hai...",
-            "I understand this can be confusing. Let me break it down for you step by step."
-        ],
-        study: [
-            `According to your ${currentUser.board} Class ${currentUser.class} ${currentUser.subject} syllabus, this topic covers...`,
-            "Let me explain this concept in detail as per your curriculum...",
-            "This is an important concept for your exams. Here's the detailed explanation..."
-        ],
-        exam: [
-            "Practice question: Explain this concept in your own words.",
-            "MCQ: Which of the following best describes this?",
-            "Let me create a quiz to test your understanding..."
-        ],
-        coding: [
-            "Here's how you can implement this in Python...",
-            "Let me explain the algorithm step by step...",
-            "For this problem, the optimal solution would be..."
-        ]
-    };
-    
-    const modeResponses = responses[currentMode] || responses.chat;
-    const response = modeResponses[Math.floor(Math.random() * modeResponses.length)];
-    
-    showMessage(response, 'ai');
-}
-
 // Saved Scans Functions
 function updateSavedScansList() {
     const container = document.getElementById('saved-scans-list');
@@ -271,7 +311,7 @@ function updateSavedScansList() {
         const scanElement = document.createElement('div');
         scanElement.className = 'saved-scan';
         scanElement.innerHTML = `
-            <strong>${new Date(scan.timestamp).toLocaleDateString()}</strong>
+            <strong>📄 ${new Date(scan.timestamp).toLocaleDateString()}</strong>
             <p>${scan.text.substring(0, 50)}...</p>
         `;
         scanElement.addEventListener('click', () => loadScan(scan));
@@ -280,9 +320,18 @@ function updateSavedScansList() {
 }
 
 function loadScan(scan) {
-    showMessage(`Loaded scan from ${new Date(scan.timestamp).toLocaleString()}. What would you like to know about this material?`, 'ai');
+    showMessage(`📚 Loaded scan from ${new Date(scan.timestamp).toLocaleString()}. What would you like to know about this material?`, 'ai');
 }
 
 function showSavedScans() {
-    alert(`You have ${savedScans.length} saved scans. This feature will show all your previous scans.`);
+    if (savedScans.length === 0) {
+        alert('No saved scans yet. Scan some textbook pages first!');
+    } else {
+        alert(`You have ${savedScans.length} saved scans. Click on them in the sidebar to load.`);
+    }
 }
+
+// Voice Features (Basic)
+document.getElementById('voice-btn').addEventListener('click', function() {
+    alert('🎤 Voice feature will be available in the next update!');
+});
