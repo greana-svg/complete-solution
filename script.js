@@ -181,11 +181,13 @@ async function processImage(imageData) {
     }
 }
 
-// REAL AI Integration
-const API_BASE_URL = 'https://complete-solution-backend.onrender.com/api';
+// REAL AI Integration - USING WORKING BACKEND
+const API_BASE_URL = 'https://completesolutionai.onrender.com/api';
 
 async function sendToAI(message, context = '') {
     try {
+        showMessage('🤔 Thinking...', 'ai');
+        
         const response = await fetch(`${API_BASE_URL}/chat/message`, {
             method: 'POST',
             headers: {
@@ -196,12 +198,18 @@ async function sendToAI(message, context = '') {
                 mode: currentMode,
                 language: currentLanguage,
                 context: context,
-                userClass: currentUser?.class,
-                subject: currentUser?.subject
+                userClass: currentUser?.class || '10',
+                subject: currentUser?.subject || 'science'
             })
         });
 
         const data = await response.json();
+        
+        // Remove the "Thinking..." message
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages.lastChild && chatMessages.lastChild.textContent === '🤔 Thinking...') {
+            chatMessages.removeChild(chatMessages.lastChild);
+        }
         
         if (data.success) {
             return data.response;
@@ -210,71 +218,64 @@ async function sendToAI(message, context = '') {
         }
     } catch (error) {
         console.error('API Error:', error);
-        // Fallback to smart responses
+        // Return smart fallback response
         return getSmartResponse(message, context);
     }
 }
 
-// Smart fallback responses based on context
+// Smart fallback responses
 function getSmartResponse(message, context) {
     const lowerMessage = message.toLowerCase();
-    const lowerContext = context.toLowerCase();
     
-    // Science responses
-    if (lowerContext.includes('photosynthesis') || lowerMessage.includes('photosynthesis')) {
-        return "Photosynthesis is how plants make their food using sunlight! 🌱☀️ Plants take in carbon dioxide and water, and with sunlight, they create glucose (sugar) and release oxygen. It's like cooking food but with sunlight instead of fire!";
+    if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+        return "Hello! I'm your AI tutor. I can help you understand concepts from your textbooks, solve problems, and prepare for exams. What would you like to learn today?";
     }
     
-    if (lowerContext.includes('newton') || lowerMessage.includes('newton')) {
-        return "Newton's laws explain how objects move! First law: Things don't move unless pushed. Second law: Force = mass × acceleration. Third law: Every action has an equal reaction. Like when you push a wall, it pushes back!";
+    if (lowerMessage.includes('photo') || lowerMessage.includes('plant')) {
+        return "Photosynthesis is the amazing process where plants make their own food using sunlight! 🌱 They take carbon dioxide and water, and with sunlight's help, create glucose (sugar) and release oxygen. This is why plants are so important for our environment!";
     }
     
-    if (lowerContext.includes('quadratic') || lowerMessage.includes('quadratic')) {
-        return "Quadratic equations look like: ax² + bx + c = 0. To solve them, use the formula: x = [-b ± √(b² - 4ac)] ÷ 2a. It helps find where a parabola crosses the x-axis!";
+    if (lowerMessage.includes('math') || lowerMessage.includes('algebra')) {
+        return "Mathematics helps us understand patterns and solve problems. For algebra, remember that we use letters to represent unknown numbers. The key is to balance both sides of the equation - whatever you do to one side, do to the other!";
     }
     
-    if (lowerContext.includes('water cycle') || lowerMessage.includes('water cycle')) {
-        return "The water cycle is nature's recycling system! 💧 Water evaporates from oceans, forms clouds, rains down, and flows back to oceans. It's like a never-ending journey of water!";
+    if (lowerMessage.includes('science') || lowerMessage.includes('experiment')) {
+        return "Science is all about curiosity and discovery! The scientific method has these steps: 1) Ask a question 2) Do research 3) Make a hypothesis 4) Test with experiments 5) Analyze results 6) Draw conclusions. What science topic interests you?";
     }
     
-    // General subject responses
-    if (lowerMessage.includes('what is') || lowerMessage.includes('explain')) {
-        return `Based on your scanned text about "${context.substring(0, 50)}...", this concept is important because... Let me explain it simply: It's about understanding how things work in a systematic way. Would you like me to go deeper into any specific part?`;
+    if (lowerMessage.includes('history') || lowerMessage.includes('past')) {
+        return "History teaches us about our past and helps us understand the present. Every historical event has causes and effects. Studying history helps us learn from mistakes and appreciate progress!";
     }
     
-    if (lowerMessage.includes('how to') || lowerMessage.includes('steps')) {
-        return `For "${context.substring(0, 30)}...", here are the steps: 1) Understand the basic concept 2) Identify the key elements 3) Apply the formula/method 4) Practice with examples. Want me to break down each step?`;
-    }
-    
-    if (lowerMessage.includes('example') || lowerMessage.includes('example')) {
-        return `Let me give you a real-life example for "${context.substring(0, 40)}..." Imagine you're in this situation... [specific example based on context]. Does this help you understand better?`;
+    if (lowerMessage.includes('english') || lowerMessage.includes('grammar')) {
+        return "English grammar has simple rules to help us communicate clearly. Remember: sentences need a subject and verb, punctuation helps with meaning, and practice makes perfect! Would you like help with specific grammar rules?";
     }
     
     // Mode-specific responses
     const modeResponses = {
         chat: [
-            "That's a great question beta! Let me explain this in simple Hinglish...",
-            "Achha sawal hai! Yeh concept actually bahut interesting hai...",
-            "Don't worry baccha, I'll make this easy for you to understand!",
-            "Main tumhe is concept ko step-by-step samjhati hun, thik hai?"
+            "That's an interesting question! Let me explain this in a simple way...",
+            "I love this question! Here's how I understand it...",
+            "Great curiosity! This concept is actually quite fascinating when you break it down...",
+            "Wonderful question! Let me share what I know about this..."
         ],
         study: [
-            `According to Class ${currentUser?.class} ${currentUser?.subject} curriculum, this topic has these key points...`,
-            "Let me explain this concept in detail with proper academic structure...",
-            "This is an important topic for your exams. Focus on these aspects...",
-            "The textbook explains this concept with these main ideas..."
+            "This is an important academic concept. Let me explain it systematically...",
+            "According to standard curriculum, this topic covers several key aspects...",
+            "For proper understanding, we should approach this step by step...",
+            "This concept has these main components that you should master..."
         ],
         exam: [
-            "Important for exams: Remember these key points...",
-            "Practice question: How would you apply this concept?",
-            "Exam tip: This concept often appears in these types of questions...",
-            "MCQ practice: Which of these best describes the concept?"
+            "For exam preparation, focus on these key points...",
+            "This type of question often appears in exams. Remember...",
+            "Exam tip: Practice these aspects to score better...",
+            "Important for tests: Make sure you understand..."
         ],
         coding: [
-            "In programming, this concept works by...",
-            "Here's how to implement this in code...",
-            "The algorithm for this would be...",
-            "Let me explain this with a code example..."
+            "In programming, this concept helps solve problems efficiently...",
+            "The algorithm approach would be to break this down into steps...",
+            "For coding, we need to think about logic and structure...",
+            "This programming concept works by following these principles..."
         ]
     };
     
